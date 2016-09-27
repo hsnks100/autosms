@@ -25,7 +25,30 @@ my $dbh = DBI->connect(
 my $api_key = 'AIzaSyD9HetdrNyVbNU-de4bW1UWf2f9YvhLxf8';
 my $google  = WWW::Google::URLShortener->new({ api_key => $api_key });
 
-sendSMS("01073177595", "vvvv");
+my @userRows;
+my @taskRows;
+my @recentRows;
+
+sub fetchRows{
+  my $sth = $dbh->prepare("SELECT * from USER_TABLE");
+  $sth->execute() or die $DBI::errstr;
+
+  #print "Number of rows found :" + $sth->rows;
+  while (my @row = $sth->fetchrow_array()) {
+    my ($id, $pw, $phone ) = @row;
+    my %temp = (id => $id, pw => $pw, phone => $phone);
+    push @userRows, \%temp;
+    #print "First Name = $first_name, Last Name = $last_name\n";
+  }
+  $sth->finish();
+
+  print Dumper(\@userRows);
+
+}
+
+fetchRows();
+exit;
+#sendSMS("01073177595", "vvvv");
 #cse_free();
 
 sub sendSMS{
