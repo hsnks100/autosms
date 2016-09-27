@@ -7,7 +7,7 @@
 shell_exec('cd /home/gsoo/public_html');
 //exec("git add -A");
 //exec('git commit -a -m "hook"');
-exec("pwd && git status" , $output, $error);
+exec("pwd && git pull" , $output, $error);
 print_r($output);
 print_r($error);
 
