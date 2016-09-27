@@ -5,8 +5,8 @@
 //echo "end";
 //
 shell_exec('cd /home/gsoo/public_html');
-exec("git add -A");
-exec('git commit -a -m "hook');
+//exec("git add -A");
+//exec('git commit -a -m "hook"');
 exec("git pull origin master" , $output, $error);
 print_r($output);
 print_r($error);
