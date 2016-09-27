@@ -13,8 +13,10 @@ use DBI;
 #my @ary = DBI->available_drivers();
 #print join("\n", @ary), "\n";
 
+
+my $host = "59.22.105.139";
 my $dbh = DBI->connect(          
-    "dbi:mysql:dbname=autosms", 
+    "dbi:mysql:dbname=autosms;host=$host", 
     "ksoo",                          
     "asdqwe",                          
     { RaiseError => 1 },         
@@ -42,14 +44,47 @@ sub fetchRows{
   }
   $sth->finish();
 
+  my $sth = $dbh->prepare("SELECT * from TASK_TABLE");
+  $sth->execute() or die $DBI::errstr;
+
+  #print "Number of rows found :" + $sth->rows;
+  while (my @row = $sth->fetchrow_array()) {
+    my ($id, $user_id, $type ) = @row;
+    my %temp = (user_id => $user_id, type => $type);
+    push @taskRows, \%temp;
+    #print "First Name = $first_name, Last Name = $last_name\n";
+  }
+  $sth->finish();
+
+  my $sth = $dbh->prepare("SELECT * from RECENT_TABLE");
+  $sth->execute() or die $DBI::errstr;
+
+  #print "Number of rows found :" + $sth->rows;
+  while (my @row = $sth->fetchrow_array()) {
+    my ($type, $no) = @row;
+    my %temp = (type => $type, no => $no);
+    push @recentRows, \%temp;
+    #print "First Name = $first_name, Last Name = $last_name\n";
+  }
+  $sth->finish();
   print Dumper(\@userRows);
+  print Dumper(\@taskRows);
+  print Dumper(\@recentRows);
 
 }
 
 fetchRows();
+
+
+# cse_free 호출...
 exit;
 #sendSMS("01073177595", "vvvv");
 #cse_free();
+
+
+
+##########################################################################
+$dbh->disconnect();
 
 sub sendSMS{
   my ($phone, $content) = @_;
@@ -63,34 +98,19 @@ sub sendSMS{
 
 
 
-  my $url = "http://mspeeder.kr/sms_sender2.php?action=go&smsType=S&subject=제목&msg=$content&rphone=01073177595&sphone1=010&sphone2=7317&sphone3=7595&nointeractive=1&repeatNum=1&repeatTime=15";
+  my $url = "http://mspeeder.kr/sms_sender2.php?action=go&smsType=S&subject=제목&msg=$content&rphone=$a1$a2$a3&sphone1=$a1&sphone2=$a2&sphone3=$a3&nointeractive=1&repeatNum=1&repeatTime=15";
   my $content = get($url);
 }
 sub cse_free{
   my $localLastNo;
-  #unless(-e "lastno.txt"){
-    #$lastNo = 0; 
-  #}
-  #else{
-    #open FH, "<", "lastno.txt" or die "$!\n";
-    #$lastNo = int<FH>;
-    #close FH;
-  #}
-  #print "lastNo = $lastNo\n";
-  my $sth = $dbh->prepare("SELECT * from RECENT_TABLE where type = 'cse_free'");
-  $sth->execute() or die $DBI::errstr;
 
-  my ($type, $recentNo) = $sth->fetchrow();
-  print "$type, $recentNo\n";
-  $sth->finish();
-#exit;
+  # recenttable 에서 type=cse_free 인 경우의 no 를 얻어와서 $localLastNo 에 넣는다.
   my $url = 'http://uwcms.pusan.ac.kr/user/indexSub.action?codyMenuSeq=21712&siteId=cse';
   my $res = HTTP::Tiny->new->get($url); 
   my $html = $res->{content}; 
   my $dom = Mojo::DOM->new($html); 
   my $maxNo = -1e9;
   print "send list\n";
-#$lastNo = 98;
   for my $post ( $dom->find('table[summary="게시판리스트"]>tbody>tr')->each ) { 
     my $title = $post->at('[class="title"]')->all_text;
     my $no = $post->at('[class="no"]')->all_text;
@@ -107,10 +127,6 @@ sub cse_free{
     if($no > $localLastNo){ 
       my $url = "http://mspeeder.kr/sms_sender2.php?action=go&smsType=S&subject=제목&msg=$title&rphone=01073177595&sphone1=010&sphone2=7317&sphone3=7595&nointeractive=1&repeatNum=1&repeatTime=15";
       my $content = get($url);
-      #print $content;
-
-      #print "$title\n";
-
     }
   }
   print "-----------\n";
@@ -125,5 +141,3 @@ sub cse_free{
 
 }
 
-##########################################################################
-$dbh->disconnect();
